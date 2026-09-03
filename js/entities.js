@@ -72,6 +72,10 @@ class Monkey {
       } else {
         this.state = "idle";
       }
+    } else {
+      // Plant firmly for the throw instead of sliding on whatever
+      // horizontal speed was left over from the moment it started.
+      this.vx = 0;
     }
 
     // Physics integration
@@ -104,7 +108,7 @@ class Monkey {
     this.frameTimer += dt;
     if (this.state === "throw") {
       const frames = ASSET_MANIFEST.monkey.throw;
-      const perFrame = 0.06;
+      const perFrame = 0.09;
       if (this.frameTimer >= perFrame) {
         this.frameTimer = 0;
         this.frame++;

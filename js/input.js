@@ -3,6 +3,8 @@
 const Input = {
   keys: {},
   pointer: { x: 0, y: 0, down: false, justClicked: false },
+  // Set by on-screen touch buttons (mobile), OR'd with keyboard state below.
+  virtual: { left: false, right: false, jump: false },
 
   init(canvas) {
     window.addEventListener("keydown", (e) => {
@@ -51,6 +53,29 @@ const Input = {
     window.addEventListener("touchend", () => {
       this.pointer.down = false;
     });
+
+    this.initVirtualButtons();
+  },
+
+  // Wire up the on-screen d-pad/jump buttons (shown on touch devices) to
+  // the same movement state the keyboard drives, so mobile play works
+  // without a keyboard.
+  initVirtualButtons() {
+    const bind = (id, key) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const set = (v) => (e) => {
+        this.virtual[key] = v;
+        e.preventDefault();
+      };
+      el.addEventListener("pointerdown", set(true));
+      el.addEventListener("pointerup", set(false));
+      el.addEventListener("pointerleave", set(false));
+      el.addEventListener("pointercancel", set(false));
+    };
+    bind("btn-left", "left");
+    bind("btn-right", "right");
+    bind("btn-jump", "jump");
   },
 
   // Call once per frame after all states have had a chance to read the click.
@@ -63,13 +88,13 @@ const Input = {
   },
 
   left() {
-    return this.down("ArrowLeft") || this.down("KeyA");
+    return this.down("ArrowLeft") || this.down("KeyA") || this.virtual.left;
   },
   right() {
-    return this.down("ArrowRight") || this.down("KeyD");
+    return this.down("ArrowRight") || this.down("KeyD") || this.virtual.right;
   },
   jumpPressed() {
-    return this.down("Space") || this.down("ArrowUp") || this.down("KeyW");
+    return this.down("Space") || this.down("ArrowUp") || this.down("KeyW") || this.virtual.jump;
   },
   throwPressed() {
     return this.down("KeyF") || this.down("Enter");

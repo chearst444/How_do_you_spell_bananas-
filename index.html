@@ -7,11 +7,20 @@
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <div id="game-wrap">
-    <canvas id="game" width="960" height="600"></canvas>
-    <div id="loading">
-      <div class="loading-label">Loading&hellip;</div>
-      <div class="loading-bar"><div id="loading-fill"></div></div>
+  <div id="page-stack">
+    <div id="game-wrap">
+      <canvas id="game" width="960" height="600"></canvas>
+      <div id="loading">
+        <div class="loading-label">Loading&hellip;</div>
+        <div class="loading-bar"><div id="loading-fill"></div></div>
+      </div>
+    </div>
+    <div id="touch-controls">
+      <div class="touch-dpad">
+        <button id="btn-left" class="touch-btn" aria-label="Move left">&#8592;</button>
+        <button id="btn-right" class="touch-btn" aria-label="Move right">&#8594;</button>
+      </div>
+      <button id="btn-jump" class="touch-btn touch-jump" aria-label="Jump">&#8593;</button>
     </div>
   </div>
 

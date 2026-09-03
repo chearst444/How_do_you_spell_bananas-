@@ -291,13 +291,17 @@ const FlatLevel = {
     }
 
     if (Input.pointer.justClicked && !this.roundLocked) {
+      // A little tap forgiveness beyond the drawn tile edge - the canvas
+      // scales down a lot on small phone screens, so the visual tile is
+      // tiny in real touch pixels even though it's a fixed 50px here.
+      const pad = 10;
       for (const tile of this.letters) {
         if (tile.resolved) continue;
         if (
-          Input.pointer.x >= tile.x &&
-          Input.pointer.x <= tile.x + tile.w &&
-          Input.pointer.y >= tile.y &&
-          Input.pointer.y <= tile.y + tile.h
+          Input.pointer.x >= tile.x - pad &&
+          Input.pointer.x <= tile.x + tile.w + pad &&
+          Input.pointer.y >= tile.y - pad &&
+          Input.pointer.y <= tile.y + tile.h + pad
         ) {
           this.throwAt(tile);
         }
@@ -323,27 +327,50 @@ const FlatLevel = {
     if (this.banana) this.banana.draw(ctx);
     this.monkey.draw(ctx);
 
-    ctx.save();
-    ctx.textAlign = "center";
-    ctx.font = "bold 20px 'Trebuchet MS', sans-serif";
-    ctx.fillStyle = "#fff6df";
-    ctx.strokeStyle = "#3a2a15";
-    ctx.lineWidth = 4;
-    const prompt = "Throw bananas at the letters to spell the word!";
-    ctx.strokeText(prompt, canvas.width / 2, 50);
-    ctx.fillText(prompt, canvas.width / 2, 50);
+    this.drawHeader(ctx, canvas);
+  },
 
-    ctx.font = "16px 'Trebuchet MS', sans-serif";
-    const progress = `Words completed: ${this.correctCount} / ${this.needed}`;
-    ctx.strokeText(progress, canvas.width / 2, 76);
-    ctx.fillText(progress, canvas.width / 2, 76);
+  // Clue + progress live on a dark panel so they stay readable over bright
+  // sky art. Sized and positioned to sit beside the HUD's health/score
+  // boxes (top-left), never under or overlapping them.
+  drawHeader(ctx, canvas) {
+    const panelX = 260;
+    const panelY = 16;
+    const panelW = canvas.width - 20 - panelX;
+    const panelH = 78;
+
+    ctx.save();
+    ctx.fillStyle = "rgba(15, 12, 8, 0.72)";
+    ctx.strokeStyle = "rgba(232, 211, 168, 0.35)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(panelX, panelY, panelW, panelH, 12);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.textAlign = "center";
+    const midX = panelX + panelW / 2;
+    ctx.fillStyle = "#fff6df";
+    const clue = `Clue: ${this.currentWord.clue}`;
+    ctx.font = "bold 17px 'Trebuchet MS', sans-serif";
+    ctx.fillText(clue, midX, panelY + 30, panelW - 28);
+
+    ctx.font = "14px 'Trebuchet MS', sans-serif";
+    ctx.fillStyle = "#d8cba8";
+    const progress = `${this.currentWord.word.length}-letter word · Words completed: ${this.correctCount} / ${this.needed}`;
+    ctx.fillText(progress, midX, panelY + 56, panelW - 28);
+    ctx.restore();
 
     if (this.messageTimer > 0) {
-      ctx.font = "bold 22px 'Trebuchet MS', sans-serif";
+      ctx.save();
+      ctx.textAlign = "center";
+      ctx.font = "bold 24px 'Trebuchet MS', sans-serif";
+      ctx.strokeStyle = "#2a1f10";
+      ctx.lineWidth = 5;
       ctx.fillStyle = this.message.startsWith("Correct") ? "#9dffb0" : "#ff9d9d";
-      ctx.strokeText(this.message, canvas.width / 2, 130);
-      ctx.fillText(this.message, canvas.width / 2, 130);
+      ctx.strokeText(this.message, canvas.width / 2, 148);
+      ctx.fillText(this.message, canvas.width / 2, 148);
+      ctx.restore();
     }
-    ctx.restore();
   },
 };
