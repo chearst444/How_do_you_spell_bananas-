@@ -16,6 +16,7 @@ const ASSET_MANIFEST = {
     log_dark: "assets/platforms/log_dark.png",
     hazard_spiked: "assets/platforms/hazard_spiked.png",
     hazard_legged: "assets/platforms/hazard_legged.png",
+    plank_bridge: "assets/platforms/plank_bridge.png",
   },
   jumpingAreas: {
     one: {

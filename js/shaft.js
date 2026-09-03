@@ -35,7 +35,7 @@ const Shaft = {
     this.monkey.y = this.floor.y;
 
     this.platforms = [];
-    const normalSprites = ["log_whole", "lily_pad", "log_broken", "log_dark"];
+    const normalSprites = ["log_whole", "lily_pad", "log_broken", "log_dark", "plank_bridge"];
     let worldY = -70;
     let leftSide = true;
     for (let i = 0; i < SHAFT_PLATFORM_COUNT; i++) {
