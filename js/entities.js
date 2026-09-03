@@ -9,8 +9,10 @@ class Monkey {
   constructor(x, y) {
     this.x = x;
     this.y = y;
-    this.w = 62;
-    this.h = 68;
+    // Almost twice the original size so the monkey reads clearly during
+    // gameplay and shaft platforms feel closer together relative to him.
+    this.w = 112;
+    this.h = 122;
     this.vx = 0;
     this.vy = 0;
     this.onGround = false;

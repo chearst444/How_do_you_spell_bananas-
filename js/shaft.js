@@ -5,10 +5,12 @@
 
 const SHAFT_STYLE_KEYS = ["one", "two", "three", "four"];
 const SHAFT_PLATFORM_COUNT = 16;
-const SHAFT_SPACING = 100;
+// Tighter vertical gaps now that the monkey is much bigger - platforms
+// used to read as spaced too far apart relative to him.
+const SHAFT_SPACING = 78;
 const SHAFT_LEFT_X = 220;
 const SHAFT_RIGHT_X = 620;
-const SHAFT_PLATFORM_W = 120;
+const SHAFT_PLATFORM_W = 140;
 const SHAFT_PLATFORM_H = 40;
 const FALL_DAMAGE_THRESHOLD = 260;
 

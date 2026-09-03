@@ -17,7 +17,10 @@ const WordDeckManager = {
 const GROUND_Y = 520;
 const LETTER_TILE = 50;
 const DECOY_COUNT = 5;
-const SCATTER_BOUNDS = { x0: 50, x1: 910, y0: 150, y1: 470 };
+// y0 clears even a 3-line-wrapped clue panel (rare, but the panel grows
+// with clue length so this has to stay below its worst case, not its
+// typical case).
+const SCATTER_BOUNDS = { x0: 50, x1: 910, y0: 215, y1: 470 };
 
 const FlatLevel = {
   levelIndex: 0,
@@ -330,35 +333,69 @@ const FlatLevel = {
     this.drawHeader(ctx, canvas);
   },
 
+  // Greedy word-wrap: splits text into lines no wider than maxWidth under
+  // ctx's currently-set font.
+  _wrapText(ctx, text, maxWidth) {
+    const words = text.split(" ");
+    const lines = [];
+    let current = "";
+    for (const w of words) {
+      const test = current ? `${current} ${w}` : w;
+      if (current && ctx.measureText(test).width > maxWidth) {
+        lines.push(current);
+        current = w;
+      } else {
+        current = test;
+      }
+    }
+    if (current) lines.push(current);
+    return lines;
+  },
+
   // Clue + progress live on a dark panel so they stay readable over bright
   // sky art. Sized and positioned to sit beside the HUD's health/score
-  // boxes (top-left), never under or overlapping them.
+  // boxes (top-left), never under or overlapping them. Height grows with
+  // the (large) clue text, wrapping instead of squishing onto one line.
   drawHeader(ctx, canvas) {
-    const panelX = 260;
+    const panelX = 250;
     const panelY = 16;
     const panelW = canvas.width - 20 - panelX;
-    const panelH = 78;
+    const clueFont = "bold 34px 'Trebuchet MS', sans-serif";
+    const progressFont = "24px 'Trebuchet MS', sans-serif";
+    const clueLineH = 40;
+    const progressLineH = 30;
+    const padTop = 20;
+    const padGap = 10;
+    const padBottom = 18;
 
     ctx.save();
-    ctx.fillStyle = "rgba(15, 12, 8, 0.72)";
+    ctx.font = clueFont;
+    const clue = `Clue: ${this.currentWord.clue}`;
+    const clueLines = this._wrapText(ctx, clue, panelW - 36);
+    const panelH = padTop + clueLines.length * clueLineH + padGap + progressLineH + padBottom;
+
+    ctx.fillStyle = "rgba(15, 12, 8, 0.78)";
     ctx.strokeStyle = "rgba(232, 211, 168, 0.35)";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.roundRect(panelX, panelY, panelW, panelH, 12);
+    ctx.roundRect(panelX, panelY, panelW, panelH, 14);
     ctx.fill();
     ctx.stroke();
 
     ctx.textAlign = "center";
     const midX = panelX + panelW / 2;
     ctx.fillStyle = "#fff6df";
-    const clue = `Clue: ${this.currentWord.clue}`;
-    ctx.font = "bold 17px 'Trebuchet MS', sans-serif";
-    ctx.fillText(clue, midX, panelY + 30, panelW - 28);
+    ctx.font = clueFont;
+    let ly = panelY + padTop + clueLineH * 0.72;
+    for (const line of clueLines) {
+      ctx.fillText(line, midX, ly);
+      ly += clueLineH;
+    }
 
-    ctx.font = "14px 'Trebuchet MS', sans-serif";
+    ctx.font = progressFont;
     ctx.fillStyle = "#d8cba8";
     const progress = `${this.currentWord.word.length}-letter word - Words completed: ${this.correctCount} / ${this.needed}`;
-    ctx.fillText(progress, midX, panelY + 56, panelW - 28);
+    ctx.fillText(progress, midX, panelY + padTop + clueLines.length * clueLineH + padGap + progressLineH * 0.72, panelW - 24);
     ctx.restore();
 
     if (this.messageTimer > 0) {
@@ -368,8 +405,9 @@ const FlatLevel = {
       ctx.strokeStyle = "#2a1f10";
       ctx.lineWidth = 5;
       ctx.fillStyle = this.message.startsWith("Correct") ? "#9dffb0" : "#ff9d9d";
-      ctx.strokeText(this.message, canvas.width / 2, 148);
-      ctx.fillText(this.message, canvas.width / 2, 148);
+      const msgY = panelY + panelH + 30;
+      ctx.strokeText(this.message, canvas.width / 2, msgY);
+      ctx.fillText(this.message, canvas.width / 2, msgY);
       ctx.restore();
     }
   },
