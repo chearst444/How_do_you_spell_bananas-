@@ -151,13 +151,27 @@ const Shaft = {
     }
   },
 
+  // Which level's sky backdrop shows behind this shaft's walls. Uses the
+  // sky of the level being climbed INTO, so the shaft reads as the open
+  // air just below that level rather than a generic void.
+  backdropSky() {
+    const levelKeys = ["level1", "level2", "level3"];
+    const key = levelKeys[(this.shaftIndex + 1) % levelKeys.length];
+    return ASSET_MANIFEST.levels[key].sky;
+  },
+
   draw(ctx, canvas) {
-    // Sky-ish gradient backdrop for the shaft.
+    const sky = Assets.get(this.backdropSky());
     const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
     grad.addColorStop(0, "#1b2a3d");
     grad.addColorStop(1, "#0d1420");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (sky && sky.complete) {
+      ctx.drawImage(sky, 0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "rgba(8, 12, 20, 0.4)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
 
     ctx.save();
     ctx.translate(0, -this.camera.y);

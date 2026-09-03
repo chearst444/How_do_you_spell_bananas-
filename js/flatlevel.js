@@ -14,8 +14,12 @@ const WordDeckManager = {
 };
 
 const TILE_SPRITES = ["log_whole", "lily_pad", "log_broken", "log_dark"];
-const TILE_X = [110, 340, 560, 780];
-const TILE_Y = [430, 465, 440, 475];
+// Spread across the full open play area now that the level fills the whole
+// screen, not clustered in a thin band near the ground.
+const TILE_X = [120, 370, 590, 830];
+// Kept within single-jump reach of the ground (~140px) so every platform
+// stays directly hoppable, just spread further apart than before.
+const TILE_Y = [385, 460, 400, 470];
 const GROUND_Y = 520;
 
 const FlatLevel = {
