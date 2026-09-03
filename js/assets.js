@@ -65,6 +65,13 @@ const ASSET_MANIFEST = {
       groundTile: "assets/levels/level3/ground_tile.png",
       mushroomScatter: "assets/levels/level3/mushroom_scatter.png",
     },
+    level4: {
+      sky: "assets/levels/level4/sky.png",
+      backdropTop: "assets/levels/level4/floating_islands.png",
+      groundPattern: "assets/levels/level4/ground_pattern.png",
+      groundTile: "assets/levels/level4/ground_tile.png",
+      stoneGrassLedge: "assets/levels/level4/stone_grass_ledge.png",
+    },
   },
   props: {
     spearFlag: "assets/props/spear_flag.png",

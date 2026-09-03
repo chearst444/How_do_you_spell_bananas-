@@ -155,7 +155,7 @@ const Shaft = {
   // sky of the level being climbed INTO, so the shaft reads as the open
   // air just below that level rather than a generic void.
   backdropSky() {
-    const levelKeys = ["level1", "level2", "level3"];
+    const levelKeys = ["level1", "level2", "level3", "level4"];
     const key = levelKeys[(this.shaftIndex + 1) % levelKeys.length];
     return ASSET_MANIFEST.levels[key].sky;
   },

@@ -37,7 +37,7 @@ const FlatLevel = {
   props: [],
 
   init(levelIndex, monkey) {
-    this.levelIndex = levelIndex % 3;
+    this.levelIndex = levelIndex % 4;
     this.monkey = monkey || new Monkey(80, GROUND_Y);
     this.monkey.x = 80;
     this.monkey.y = GROUND_Y;
@@ -108,7 +108,7 @@ const FlatLevel = {
     const mid = Assets.get(bg.backdropTop || bg.floatingIslands || bg.darkRidge);
     if (mid && mid.complete) ctx.drawImage(mid, 0, 0, canvas.width, canvas.height);
 
-    const accent = Assets.get(bg.floatingRocks || bg.bridgeGapRidge || bg.mushroomScatter);
+    const accent = Assets.get(bg.floatingRocks || bg.bridgeGapRidge || bg.mushroomScatter || bg.groundPattern);
     if (accent && accent.complete) ctx.drawImage(accent, 0, 0, canvas.width, canvas.height);
 
     // Ground texture, tiled, sitting just under the bottom ledge art.
@@ -127,12 +127,12 @@ const FlatLevel = {
 
     // Bottom ledge/wall layer on top, its opaque strip forming the visible
     // ground edge (rest of it is transparent, revealing the scene above).
-    const ledge = Assets.get(bg.stoneLedge || bg.ropeBridge || bg.flowerGrass);
+    const ledge = Assets.get(bg.stoneLedge || bg.ropeBridge || bg.flowerGrass || bg.stoneGrassLedge);
     if (ledge && ledge.complete) ctx.drawImage(ledge, 0, 0, canvas.width, canvas.height);
   },
 
   _skyFillColor(bg) {
-    const fallback = ["#6fa2bb", "#8a6a7a", "#7a9ab0"];
+    const fallback = ["#6fa2bb", "#8a6a7a", "#7a9ab0", "#5f8a6a"];
     return fallback[this.levelIndex % fallback.length];
   },
 
