@@ -1,6 +1,7 @@
-// Flat-level gameplay: monkey hops between word platforms and throws a
-// banana at the one that's spelled correctly. 10 correct words per level
-// sends the monkey into the vertical jumping shaft to the next level.
+// Flat-level gameplay: letters are scattered around the open level (no
+// platforms to stand on) and the monkey throws bananas at them to fill in
+// the blanks of the current word, left to right. Get 10 words completed
+// and the monkey heads into the vertical jumping shaft to the next level.
 
 const WordDeckManager = {
   deck: [],
@@ -13,25 +14,24 @@ const WordDeckManager = {
   },
 };
 
-const TILE_SPRITES = ["log_whole", "lily_pad", "log_broken", "log_dark"];
-// Spread across the full open play area now that the level fills the whole
-// screen, not clustered in a thin band near the ground.
-const TILE_X = [120, 370, 590, 830];
-// Kept within single-jump reach of the ground (~140px) so every platform
-// stays directly hoppable, just spread further apart than before.
-const TILE_Y = [385, 460, 400, 470];
 const GROUND_Y = 520;
+const LETTER_TILE = 50;
+const DECOY_COUNT = 5;
+const SCATTER_BOUNDS = { x0: 50, x1: 910, y0: 150, y1: 470 };
 
 const FlatLevel = {
   levelIndex: 0,
   monkey: null,
-  platforms: [],
   ground: null,
   banana: null,
   correctCount: 0,
   needed: 10,
   currentWord: null,
+  letters: [],
+  blanks: [],
+  remainingNeeded: {},
   roundLocked: false,
+  throwInFlight: false,
   message: "",
   messageTimer: 0,
   props: [],
@@ -67,18 +67,54 @@ const FlatLevel = {
 
   _nextRound() {
     this.currentWord = WordDeckManager.next();
-    const tiles = shuffle([
-      { text: this.currentWord.word, correct: true },
-      ...this.currentWord.misspellings.map((m) => ({ text: capitalize(m), correct: false })),
-    ]);
+    const word = this.currentWord.word.toUpperCase();
 
-    this.platforms = tiles.map((tile, i) => {
-      const p = new Platform(TILE_X[i], TILE_Y[i], 130, 46, TILE_SPRITES[i], "word");
-      p.word = { text: tile.text, correct: tile.correct, resolved: null };
-      return p;
+    this.blanks = word.split("").map(() => null);
+    this.remainingNeeded = {};
+    for (const c of word) this.remainingNeeded[c] = (this.remainingNeeded[c] || 0) + 1;
+
+    const chars = word.split("");
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for (let i = 0; i < DECOY_COUNT; i++) {
+      chars.push(alphabet[Math.floor(Math.random() * alphabet.length)]);
+    }
+    const order = shuffle(chars);
+
+    // Tiles use top-left x/y + w/h, same convention as Platform, so Banana's
+    // targeting math (target.x + target.w/2) lands in the tile's center.
+    const placed = [];
+    this.letters = order.map((char) => {
+      const center = this._pickSpot(placed);
+      placed.push(center);
+      return {
+        char,
+        x: center.x - LETTER_TILE / 2,
+        y: center.y - LETTER_TILE / 2,
+        w: LETTER_TILE,
+        h: LETTER_TILE,
+        resolved: null,
+      };
     });
+
     this.roundLocked = false;
     this.throwInFlight = false;
+  },
+
+  // Rejection-sample a scatter position that doesn't overlap already-placed
+  // tiles; falls back to whatever the last attempt was if it can't find a
+  // clean spot (only matters for very crowded rounds).
+  _pickSpot(placed) {
+    const minDist = LETTER_TILE * 1.3;
+    for (let attempt = 0; attempt < 200; attempt++) {
+      const x = SCATTER_BOUNDS.x0 + Math.random() * (SCATTER_BOUNDS.x1 - SCATTER_BOUNDS.x0);
+      const y = SCATTER_BOUNDS.y0 + Math.random() * (SCATTER_BOUNDS.y1 - SCATTER_BOUNDS.y0);
+      const ok = placed.every((p) => Math.hypot(p.x - x, p.y - y) >= minDist);
+      if (ok) return { x, y };
+    }
+    return {
+      x: SCATTER_BOUNDS.x0 + Math.random() * (SCATTER_BOUNDS.x1 - SCATTER_BOUNDS.x0),
+      y: SCATTER_BOUNDS.y0 + Math.random() * (SCATTER_BOUNDS.y1 - SCATTER_BOUNDS.y0),
+    };
   },
 
   levelBackground() {
@@ -146,51 +182,124 @@ const FlatLevel = {
     }
   },
 
-  throwAt(platform) {
-    if (this.roundLocked || this.banana || this.throwInFlight || platform.word.resolved) return;
+  drawLetterTile(ctx, tile) {
+    if (tile.resolved === "correct") return; // consumed into a blank already
+    let fill = "#e8d3a8";
+    let border = "#5a3d23";
+    if (tile.resolved === "wrong") {
+      fill = "#c98a8a";
+      border = "#6b2323";
+    }
+    const cx = tile.x + tile.w / 2;
+    const cy = tile.y + tile.h / 2;
+    ctx.save();
+    ctx.fillStyle = border;
+    ctx.beginPath();
+    ctx.roundRect(tile.x, tile.y, tile.w, tile.h, 8);
+    ctx.fill();
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.roundRect(tile.x + 3, tile.y + 3, tile.w - 6, tile.h - 6, 6);
+    ctx.fill();
+
+    ctx.fillStyle = "#3a2a18";
+    ctx.font = "bold 26px 'Trebuchet MS', sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(tile.char, cx, cy + 1);
+    ctx.restore();
+  },
+
+  drawBlanks(ctx, canvas) {
+    const word = this.currentWord.word.toUpperCase();
+    const boxW = Math.min(46, 760 / word.length);
+    const gap = 6;
+    const totalW = word.length * boxW + (word.length - 1) * gap;
+    const startX = canvas.width / 2 - totalW / 2;
+    const y = GROUND_Y - 34;
+
+    ctx.save();
+    for (let i = 0; i < word.length; i++) {
+      const x = startX + i * (boxW + gap);
+      ctx.fillStyle = "#2c2214";
+      ctx.beginPath();
+      ctx.roundRect(x, y, boxW, boxW, 5);
+      ctx.fill();
+      ctx.fillStyle = this.blanks[i] ? "#e8d3a8" : "#4a3d2a";
+      ctx.beginPath();
+      ctx.roundRect(x + 2, y + 2, boxW - 4, boxW - 4, 4);
+      ctx.fill();
+      if (this.blanks[i]) {
+        ctx.fillStyle = "#3a2a18";
+        ctx.font = "bold 22px 'Trebuchet MS', sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(this.blanks[i], x + boxW / 2, y + boxW / 2 + 1);
+      }
+    }
+    ctx.restore();
+  },
+
+  throwAt(tile) {
+    if (this.roundLocked || this.banana || this.throwInFlight || tile.resolved) return;
     this.throwInFlight = true;
-    this.monkey.facing = platform.x + platform.w / 2 > this.monkey.x ? 1 : -1;
+    this.monkey.facing = tile.x + tile.w / 2 > this.monkey.x ? 1 : -1;
     this.monkey.startThrow(() => {
-      this.banana = new Banana(this.monkey.x, this.monkey.y - this.monkey.h * 0.6, platform);
-      this.banana.targetPlatform = platform;
+      this.banana = new Banana(this.monkey.x, this.monkey.y - this.monkey.h * 0.6, tile);
+      this.banana.targetTile = tile;
     });
   },
 
+  _resolveHit(tile, hud) {
+    const word = this.currentWord.word.toUpperCase();
+    if (this.remainingNeeded[tile.char] > 0) {
+      this.remainingNeeded[tile.char]--;
+      for (let i = 0; i < word.length; i++) {
+        if (word[i] === tile.char && !this.blanks[i]) {
+          this.blanks[i] = tile.char;
+          break;
+        }
+      }
+      tile.resolved = "correct";
+      const complete = this.blanks.every((b) => b);
+      if (complete) {
+        this.correctCount++;
+        hud.addScore(10);
+        this.message = "Correct! +10";
+        this.messageTimer = 1.1;
+        this.roundLocked = true;
+      }
+    } else {
+      tile.resolved = "wrong";
+      hud.damage(2);
+      this.message = "Wrong letter!";
+      this.messageTimer = 0.6;
+    }
+  },
+
   update(dt, canvas, hud) {
-    this.monkey.update(dt, [this.ground, ...this.platforms]);
+    this.monkey.update(dt, [this.ground]);
     this.monkey.x = Math.max(20, Math.min(canvas.width - 20, this.monkey.x));
 
     if (this.banana) {
       this.banana.update(dt);
       if (this.banana.done) {
-        const platform = this.banana.targetPlatform;
-        if (platform.word.correct) {
-          platform.word.resolved = "correct";
-          this.correctCount++;
-          hud.addScore(10);
-          this.message = "Correct! +10";
-          this.messageTimer = 1.1;
-          this.roundLocked = true;
-        } else {
-          platform.word.resolved = "wrong";
-          hud.damage(2);
-          this.message = "Not quite!";
-          this.messageTimer = 0.8;
-        }
+        this._resolveHit(this.banana.targetTile, hud);
         this.banana = null;
         this.throwInFlight = false;
       }
     }
 
     if (Input.pointer.justClicked && !this.roundLocked) {
-      for (const p of this.platforms) {
+      for (const tile of this.letters) {
+        if (tile.resolved) continue;
         if (
-          Input.pointer.x >= p.x &&
-          Input.pointer.x <= p.x + p.w &&
-          Input.pointer.y >= p.y - 40 &&
-          Input.pointer.y <= p.y + p.h
+          Input.pointer.x >= tile.x &&
+          Input.pointer.x <= tile.x + tile.w &&
+          Input.pointer.y >= tile.y &&
+          Input.pointer.y <= tile.y + tile.h
         ) {
-          this.throwAt(p);
+          this.throwAt(tile);
         }
       }
     }
@@ -209,7 +318,8 @@ const FlatLevel = {
   draw(ctx, canvas) {
     this.drawBackground(ctx, canvas);
     this.drawProps(ctx);
-    for (const p of this.platforms) p.draw(ctx);
+    for (const tile of this.letters) this.drawLetterTile(ctx, tile);
+    this.drawBlanks(ctx, canvas);
     if (this.banana) this.banana.draw(ctx);
     this.monkey.draw(ctx);
 
@@ -219,25 +329,21 @@ const FlatLevel = {
     ctx.fillStyle = "#fff6df";
     ctx.strokeStyle = "#3a2a15";
     ctx.lineWidth = 4;
-    const prompt = `Throw the banana at: "${this.currentWord.word}"`;
+    const prompt = "Throw bananas at the letters to spell the word!";
     ctx.strokeText(prompt, canvas.width / 2, 50);
     ctx.fillText(prompt, canvas.width / 2, 50);
 
     ctx.font = "16px 'Trebuchet MS', sans-serif";
-    const progress = `Correct: ${this.correctCount} / ${this.needed}`;
+    const progress = `Words completed: ${this.correctCount} / ${this.needed}`;
     ctx.strokeText(progress, canvas.width / 2, 76);
     ctx.fillText(progress, canvas.width / 2, 76);
 
     if (this.messageTimer > 0) {
       ctx.font = "bold 22px 'Trebuchet MS', sans-serif";
       ctx.fillStyle = this.message.startsWith("Correct") ? "#9dffb0" : "#ff9d9d";
-      ctx.strokeText(this.message, canvas.width / 2, 400 - 10);
-      ctx.fillText(this.message, canvas.width / 2, 400 - 10);
+      ctx.strokeText(this.message, canvas.width / 2, 130);
+      ctx.fillText(this.message, canvas.width / 2, 130);
     }
     ctx.restore();
   },
 };
-
-function capitalize(s) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
