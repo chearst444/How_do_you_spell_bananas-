@@ -98,31 +98,56 @@ const Shaft = {
     return null;
   },
 
+  // "walls" is a single full-width piece of art with BOTH shaft walls
+  // already painted into it (transparent gap in the middle) — draw it once,
+  // full canvas width, tiled vertically to cover the visible climb range.
   drawWalls(ctx, canvas) {
     const style = this.styleAssets();
     const wallImg = Assets.get(style.walls || style.pole);
-    if (wallImg && wallImg.complete) {
-      const w = 110;
-      const h = canvas.height;
-      ctx.drawImage(wallImg, 0, this.camera.y - 200, w, h + 400);
-      ctx.save();
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(wallImg, 0, this.camera.y - 200, w, h + 400);
-      ctx.restore();
+    if (!wallImg || !wallImg.complete) return;
+    const tileH = canvas.width * (wallImg.height / wallImg.width);
+    const top = this.camera.y - 300;
+    const bottom = this.camera.y + canvas.height + 300;
+    let y = Math.floor(top / tileH) * tileH;
+    for (; y < bottom; y += tileH) {
+      ctx.drawImage(wallImg, 0, y, canvas.width, tileH);
     }
+  },
+
+  // top_rim / bottom_cap have their actual art clustered near the bottom of
+  // a much taller transparent canvas — crop just that opaque band. The top
+  // rim reuses the same art flipped vertically so it reads as a matching cap.
+  _capCrop(img) {
+    const w = img.width;
+    const h = img.height;
+    // Known art band for these packs: roughly the bottom ~11% of the frame.
+    const srcY = Math.floor(h * 0.88);
+    const srcH = h - srcY;
+    return { sx: 0, sy: srcY, sw: w, sh: srcH };
   },
 
   drawCaps(ctx, canvas) {
     const style = this.styleAssets();
-    const half = canvas.width / 2;
+    const capW = 340;
+
     const bottomImg = Assets.get(style.bottomCap);
     if (bottomImg && bottomImg.complete) {
-      ctx.drawImage(bottomImg, half - 140, 20, 280, 90);
+      const c = this._capCrop(bottomImg);
+      const capH = capW * (c.sh / c.sw);
+      ctx.drawImage(bottomImg, c.sx, c.sy, c.sw, c.sh, canvas.width / 2 - capW / 2, 20, capW, capH);
     }
+
     const topImg = Assets.get(style.topRim || style.bottomCap);
     if (topImg && topImg.complete) {
-      ctx.drawImage(topImg, half - 140, this.topWorldY - 60, 280, 90);
+      const c = this._capCrop(topImg);
+      const capH = capW * (c.sh / c.sw);
+      ctx.save();
+      const cx = canvas.width / 2;
+      const cy = this.topWorldY - capH / 2 + 10;
+      ctx.translate(cx, cy);
+      ctx.scale(1, -1); // flip vertically so the cap faces down into the shaft
+      ctx.drawImage(topImg, c.sx, c.sy, c.sw, c.sh, -capW / 2, -capH / 2, capW, capH);
+      ctx.restore();
     }
   },
 

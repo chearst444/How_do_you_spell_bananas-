@@ -82,35 +82,54 @@ const FlatLevel = {
     return ASSET_MANIFEST.levels[key];
   },
 
+  // Each level's art is a set of full-canvas layered scene pieces (sky,
+  // midground scenery, a scattered decorative layer, and a bottom "ledge"
+  // strip), each mostly transparent outside its own band, PLUS one plain
+  // tileable ground texture. Stacking all of them fills the whole screen
+  // as one continuous scene, with the open middle band (where the sky
+  // layer's own gradient shows through) acting as the play area the
+  // monkey hops across.
   drawBackground(ctx, canvas) {
     const bg = this.levelBackground();
 
-    // Base fill so nothing shows through as black behind transparent art.
-    const fills = ["#4a6a8a", "#7a5a8a", "#6a8a9a"];
-    ctx.fillStyle = fills[this.levelIndex % fills.length];
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
     const sky = Assets.get(bg.sky);
-    if (sky && sky.complete) ctx.drawImage(sky, 0, 0, canvas.width, canvas.height);
-
-    const far = Assets.get(bg.backdropTop || bg.floatingIslands || bg.darkRidge);
-    if (far && far.complete) {
-      ctx.drawImage(far, 0, 40, canvas.width, canvas.height * 0.55);
+    if (sky && sky.complete) {
+      // Extend the sky's own lowest opaque color downward first, so the
+      // open play area reads as continuous air/sky instead of a hard cut.
+      ctx.fillStyle = this._skyFillColor(bg);
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(sky, 0, 0, canvas.width, canvas.height);
     }
 
-    // Ground strip, tiled.
+    const mid = Assets.get(bg.backdropTop || bg.floatingIslands || bg.darkRidge);
+    if (mid && mid.complete) ctx.drawImage(mid, 0, 0, canvas.width, canvas.height);
+
+    const accent = Assets.get(bg.floatingRocks || bg.bridgeGapRidge || bg.mushroomScatter);
+    if (accent && accent.complete) ctx.drawImage(accent, 0, 0, canvas.width, canvas.height);
+
+    // Ground texture, tiled, sitting just under the bottom ledge art.
     const groundTile = Assets.get(bg.groundTile);
     if (groundTile && groundTile.complete) {
-      const th = 90;
+      const th = 100;
       const scale = th / groundTile.height;
       const tw = groundTile.width * scale;
       for (let x = 0; x < canvas.width; x += tw) {
-        ctx.drawImage(groundTile, x, GROUND_Y - 6, tw + 1, th);
+        ctx.drawImage(groundTile, x, GROUND_Y - 10, tw + 1, th);
       }
     } else {
       ctx.fillStyle = "#4c5a2c";
-      ctx.fillRect(0, GROUND_Y - 6, canvas.width, 90);
+      ctx.fillRect(0, GROUND_Y - 10, canvas.width, 100);
     }
+
+    // Bottom ledge/wall layer on top, its opaque strip forming the visible
+    // ground edge (rest of it is transparent, revealing the scene above).
+    const ledge = Assets.get(bg.stoneLedge || bg.ropeBridge || bg.flowerGrass);
+    if (ledge && ledge.complete) ctx.drawImage(ledge, 0, 0, canvas.width, canvas.height);
+  },
+
+  _skyFillColor(bg) {
+    const fallback = ["#6fa2bb", "#8a6a7a", "#7a9ab0"];
+    return fallback[this.levelIndex % fallback.length];
   },
 
   drawProps(ctx) {
