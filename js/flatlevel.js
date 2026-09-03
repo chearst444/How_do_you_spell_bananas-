@@ -357,7 +357,7 @@ const FlatLevel = {
 
     ctx.font = "14px 'Trebuchet MS', sans-serif";
     ctx.fillStyle = "#d8cba8";
-    const progress = `${this.currentWord.word.length}-letter word · Words completed: ${this.correctCount} / ${this.needed}`;
+    const progress = `${this.currentWord.word.length}-letter word - Words completed: ${this.correctCount} / ${this.needed}`;
     ctx.fillText(progress, midX, panelY + 56, panelW - 28);
     ctx.restore();
 
