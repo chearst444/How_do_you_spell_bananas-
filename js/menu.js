@@ -1,16 +1,14 @@
-// Main menu screen: bamboo panel with Play / Settings / Exit.
+// Main menu screen: bamboo panel with just Play (Settings/Exit removed -
+// neither did anything, so the button art was cropped down to match
+// rather than left as dead buttons).
 
 const MenuScreen = {
   // Relative to the panel sprite's own width/height.
-  buttons: [
-    { id: "play", label: "Play", yFrac: [0.264, 0.372] },
-    { id: "settings", label: "Settings", yFrac: [0.430, 0.537] },
-    { id: "exit", label: "Exit", yFrac: [0.595, 0.702] },
-  ],
+  buttons: [{ id: "play", label: "Play", yFrac: [0.516, 0.726] }],
   xFrac: [0.28, 0.77],
 
   panelRect(ctx, canvas) {
-    const img = Assets.get(ASSET_MANIFEST.ui.panelGreen);
+    const img = Assets.get(ASSET_MANIFEST.ui.panelGreenPlayOnly);
     const scale = 3.1;
     const w = img.width * scale;
     const h = img.height * scale;
@@ -82,8 +80,6 @@ const MenuScreen = {
     if (Input.pointer.justClicked) {
       const hit = this.hitTest(canvas, Input.pointer.x, Input.pointer.y);
       if (hit === "play" && callbacks.onPlay) callbacks.onPlay();
-      if (hit === "exit" && callbacks.onExit) callbacks.onExit();
-      // "settings" has no real settings yet — no-op for now.
     }
   },
 };

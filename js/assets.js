@@ -87,6 +87,7 @@ const ASSET_MANIFEST = {
   },
   ui: {
     panelGreen: "assets/ui/panel_green.png",
+    panelGreenPlayOnly: "assets/ui/panel_green_playonly.png",
     panelDark: "assets/ui/panel_dark.png",
   },
 };
