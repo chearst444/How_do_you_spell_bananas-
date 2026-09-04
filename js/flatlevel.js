@@ -21,6 +21,9 @@ const DECOY_COUNT = 5;
 // with clue length so this has to stay below its worst case, not its
 // typical case).
 const SCATTER_BOUNDS = { x0: 50, x1: 910, y0: 215, y1: 470 };
+// Bottom-left corner where the monkey starts and idles - keep letters out
+// of it so nothing spawns hidden right behind/under him.
+const MONKEY_HOME_ZONE = { x1: 190, y0: 360 };
 
 const FlatLevel = {
   levelIndex: 0,
@@ -104,19 +107,23 @@ const FlatLevel = {
   },
 
   // Rejection-sample a scatter position that doesn't overlap already-placed
-  // tiles; falls back to whatever the last attempt was if it can't find a
-  // clean spot (only matters for very crowded rounds).
+  // tiles and isn't in the monkey's home corner (he starts at x=80 on the
+  // ground, and at his current size that corner hides anything dropped
+  // right behind him); falls back to whatever the last attempt was if it
+  // can't find a clean spot (only matters for very crowded rounds).
   _pickSpot(placed) {
     const minDist = LETTER_TILE * 1.3;
+    const inMonkeyCorner = (x, y) => x < MONKEY_HOME_ZONE.x1 && y > MONKEY_HOME_ZONE.y0;
     for (let attempt = 0; attempt < 200; attempt++) {
       const x = SCATTER_BOUNDS.x0 + Math.random() * (SCATTER_BOUNDS.x1 - SCATTER_BOUNDS.x0);
       const y = SCATTER_BOUNDS.y0 + Math.random() * (SCATTER_BOUNDS.y1 - SCATTER_BOUNDS.y0);
+      if (inMonkeyCorner(x, y)) continue;
       const ok = placed.every((p) => Math.hypot(p.x - x, p.y - y) >= minDist);
       if (ok) return { x, y };
     }
     return {
       x: SCATTER_BOUNDS.x0 + Math.random() * (SCATTER_BOUNDS.x1 - SCATTER_BOUNDS.x0),
-      y: SCATTER_BOUNDS.y0 + Math.random() * (SCATTER_BOUNDS.y1 - SCATTER_BOUNDS.y0),
+      y: SCATTER_BOUNDS.y0,
     };
   },
 
