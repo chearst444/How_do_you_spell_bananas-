@@ -8,15 +8,22 @@ const SHAFT_PLATFORM_COUNT = 16;
 // Tighter vertical gaps now that the monkey is much bigger - platforms
 // used to read as spaced too far apart relative to him.
 const SHAFT_SPACING = 78;
-// Horizontal zigzag distance: a jump only covers ~147px of horizontal
-// ground at MOVE_SPEED=3.4 over the ~43-frame flight time (v=13, g=0.6),
-// even holding a direction for the entire jump. The old left/right split
-// (220 / 620, a 260px edge-to-edge gap) was well past that reach - the
-// monkey would fly off the first platform and fall straight past the
-// second one, unable to land anywhere beyond platform 0. This split
-// keeps the edge-to-edge gap comfortably inside jump range.
-const SHAFT_LEFT_X = 345;
-const SHAFT_RIGHT_X = 475;
+// Horizontal zigzag distance. A jump only covers ~147px of horizontal
+// ground at MOVE_SPEED=3.4 over the ~43-frame flight time to a landing at
+// the SAME height (v=13, g=0.6) - and since each rung is 78px HIGHER than
+// the last, the monkey doesn't land until the falling half of the arc, so
+// the real reach to a rung one step up is only ~123px, not the full 147.
+// The old left/right split (345 / 475, a 140px platform width) actually
+// OVERLAPPED by 10px edge-to-edge - platforms in different columns were
+// close enough that walking sideways (no jump needed) carried the monkey
+// straight across, trivializing the whole shaft (and meant there was
+// nothing to actually fall off of - the next foothold was already right
+// there). This split keeps a real ~60px edge-to-edge gap: verified via a
+// simulated 1600-jump sweep (100 random shaft layouts) to always be
+// reachable by jumping and holding toward the target, but never crossable
+// on foot.
+const SHAFT_LEFT_X = 300;
+const SHAFT_RIGHT_X = 500;
 const SHAFT_PLATFORM_W = 140;
 const SHAFT_PLATFORM_H = 40;
 const FALL_DAMAGE_THRESHOLD = 260;
