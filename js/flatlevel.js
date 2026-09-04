@@ -64,13 +64,27 @@ const FlatLevel = {
   },
 
   _buildProps() {
-    const keys = Object.keys(ASSET_MANIFEST.props);
+    // vineHanging is drawn separately from the canopy, not as a ground prop.
+    const keys = Object.keys(ASSET_MANIFEST.props).filter((k) => k !== "vineHanging");
     this.props = [];
     const positions = [40, 250, 470, 690, 900];
     for (let i = 0; i < positions.length; i++) {
       const key = keys[(i + this.levelIndex * 2) % keys.length];
       this.props.push({ key, x: positions[i], scale: 0.55 + (i % 3) * 0.08 });
     }
+
+    // A vine dangling down each side of the screen, framing the play area.
+    // Kept in the narrow strips left of the HP/banana HUD (x0..~20) and
+    // right of the clue panel (~940..canvas.width) so they hang clear of
+    // both the panels and the letter-scatter zone (SCATTER_BOUNDS starts
+    // at x=50 and ends at x=910) instead of getting swallowed behind them.
+    this.hangingVines = [
+      { x: 6, dir: 1 },
+      { x: 936, dir: -1 },
+    ].map((v, i) => ({
+      x: v.x,
+      len: 210 + ((i + this.levelIndex) % 3) * 30,
+    }));
   },
 
   _nextRound() {
@@ -191,6 +205,18 @@ const FlatLevel = {
       const h = 90 * prop.scale;
       const w = (img.width / img.height) * h;
       ctx.drawImage(img, prop.x, GROUND_Y - h + 10, w, h);
+    }
+  },
+
+  // A vine dangling down each side of the screen from the canopy, framing
+  // the play area. Drawn before the HUD/clue panel so those still cover
+  // whatever top sliver of vine falls behind them.
+  drawHangingVines(ctx) {
+    const img = Assets.get(ASSET_MANIFEST.props.vineHanging);
+    if (!img || !img.complete) return;
+    for (const vine of this.hangingVines || []) {
+      const w = img.width * (vine.len / img.height);
+      ctx.drawImage(img, vine.x, 0, w, vine.len);
     }
   },
 
@@ -333,6 +359,7 @@ const FlatLevel = {
 
   draw(ctx, canvas) {
     this.drawBackground(ctx, canvas);
+    this.drawHangingVines(ctx);
     this.drawProps(ctx);
     for (const tile of this.letters) this.drawLetterTile(ctx, tile);
     this.drawBlanks(ctx, canvas);

@@ -84,6 +84,11 @@ const ASSET_MANIFEST = {
     stairs2: "assets/props/stairs2.png",
     cobblestoneTile: "assets/props/cobblestone_tile.png",
     roundTree: "assets/props/round_tree.png",
+    vineSwagLeafy: "assets/props/vine_swag_leafy.png",
+    vineSwagBerry: "assets/props/vine_swag_berry.png",
+    vineRopePlain: "assets/props/vine_rope_plain.png",
+    vineRopeThin: "assets/props/vine_rope_thin.png",
+    vineHanging: "assets/props/vine_hanging.png",
   },
   ui: {
     panelGreen: "assets/ui/panel_green.png",
