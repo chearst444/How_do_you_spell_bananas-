@@ -15,7 +15,7 @@ const WordDeckManager = {
 };
 
 const GROUND_Y = 520;
-const LETTER_TILE = 50;
+const LETTER_TILE = 68;
 const DECOY_COUNT = 5;
 // y0 clears even a 3-line-wrapped clue panel (rare, but the panel grows
 // with clue length so this has to stay below its worst case, not its
@@ -215,7 +215,7 @@ const FlatLevel = {
     ctx.fill();
 
     ctx.fillStyle = "#3a2a18";
-    ctx.font = "bold 26px 'Trebuchet MS', sans-serif";
+    ctx.font = "bold 36px 'Trebuchet MS', sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(tile.char, cx, cy + 1);
