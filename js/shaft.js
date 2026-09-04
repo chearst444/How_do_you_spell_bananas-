@@ -8,8 +8,15 @@ const SHAFT_PLATFORM_COUNT = 16;
 // Tighter vertical gaps now that the monkey is much bigger - platforms
 // used to read as spaced too far apart relative to him.
 const SHAFT_SPACING = 78;
-const SHAFT_LEFT_X = 220;
-const SHAFT_RIGHT_X = 620;
+// Horizontal zigzag distance: a jump only covers ~147px of horizontal
+// ground at MOVE_SPEED=3.4 over the ~43-frame flight time (v=13, g=0.6),
+// even holding a direction for the entire jump. The old left/right split
+// (220 / 620, a 260px edge-to-edge gap) was well past that reach - the
+// monkey would fly off the first platform and fall straight past the
+// second one, unable to land anywhere beyond platform 0. This split
+// keeps the edge-to-edge gap comfortably inside jump range.
+const SHAFT_LEFT_X = 345;
+const SHAFT_RIGHT_X = 475;
 const SHAFT_PLATFORM_W = 140;
 const SHAFT_PLATFORM_H = 40;
 const FALL_DAMAGE_THRESHOLD = 260;
@@ -43,7 +50,9 @@ const Shaft = {
     for (let i = 0; i < SHAFT_PLATFORM_COUNT; i++) {
       const isHazard = i > 2 && Math.random() < 0.18;
       const x = leftSide ? SHAFT_LEFT_X : SHAFT_RIGHT_X;
-      const jitter = (Math.random() - 0.5) * 40;
+      // Kept fairly small - worst-case jitter on both platforms still has
+      // to leave the gap well inside actual jump reach.
+      const jitter = (Math.random() - 0.5) * 24;
       const p = new Platform(
         x + jitter,
         worldY,
