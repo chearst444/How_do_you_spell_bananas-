@@ -31,7 +31,7 @@ const FlatLevel = {
   ground: null,
   banana: null,
   correctCount: 0,
-  needed: 10,
+  needed: 5,
   currentWord: null,
   letters: [],
   blanks: [],
@@ -43,7 +43,9 @@ const FlatLevel = {
   props: [],
 
   init(levelIndex, monkey) {
-    this.levelIndex = levelIndex % 4;
+    // Only 3 distinct background sets - levels 4+ reuse 1-3 rather than
+    // needing new art for every level.
+    this.levelIndex = levelIndex % 3;
     this.monkey = monkey || new Monkey(80, GROUND_Y);
     this.monkey.x = 80;
     this.monkey.y = GROUND_Y;
@@ -178,7 +180,7 @@ const FlatLevel = {
   },
 
   _skyFillColor(bg) {
-    const fallback = ["#6fa2bb", "#8a6a7a", "#7a9ab0", "#5f8a6a"];
+    const fallback = ["#6fa2bb", "#8a6a7a", "#7a9ab0"];
     return fallback[this.levelIndex % fallback.length];
   },
 

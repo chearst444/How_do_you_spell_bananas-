@@ -62,6 +62,25 @@ const Shaft = {
         isHazard ? "hazard" : "normal"
       );
       this.platforms.push(p);
+
+      // A hazard is never the only way forward: always give this rung a
+      // safe companion on the opposite column, same height, so there's
+      // always a real choice instead of a forced hit.
+      if (isHazard) {
+        const otherX = leftSide ? SHAFT_RIGHT_X : SHAFT_LEFT_X;
+        const otherJitter = (Math.random() - 0.5) * 24;
+        this.platforms.push(
+          new Platform(
+            otherX + otherJitter,
+            worldY,
+            SHAFT_PLATFORM_W,
+            SHAFT_PLATFORM_H,
+            normalSprites[(i + 1) % normalSprites.length],
+            "normal"
+          )
+        );
+      }
+
       leftSide = !leftSide;
       worldY -= SHAFT_SPACING;
     }
@@ -166,7 +185,7 @@ const Shaft = {
   // sky of the level being climbed INTO, so the shaft reads as the open
   // air just below that level rather than a generic void.
   backdropSky() {
-    const levelKeys = ["level1", "level2", "level3", "level4"];
+    const levelKeys = ["level1", "level2", "level3"];
     const key = levelKeys[(this.shaftIndex + 1) % levelKeys.length];
     return ASSET_MANIFEST.levels[key].sky;
   },
